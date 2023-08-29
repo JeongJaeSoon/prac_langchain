@@ -1,10 +1,5 @@
-import os
-
-import pandas as pd
 from dotenv import load_dotenv
 from fastapi import FastAPI
-from langchain import OpenAI
-from langchain.agents import create_pandas_dataframe_agent
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders.csv_loader import CSVLoader
