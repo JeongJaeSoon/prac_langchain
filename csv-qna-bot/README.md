@@ -11,7 +11,7 @@ $ poetry install
 
 ```bash
 $ poetry shell
-$ uvicorn main:app --reload --port 8080
+$ uvicorn --reload --host 0.0.0.0 --port 5000 app:fastapi_app
 ```
 
 ## Memo
