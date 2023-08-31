@@ -1,20 +1,19 @@
 import logging
-
-logging.basicConfig(level=logging.DEBUG)
-
 import os
+
 from dotenv import load_dotenv
-
-from slack_bolt.async_app import AsyncApp
-from slack_bolt.adapter.socket_mode.aiohttp import AsyncSocketModeHandler
-
 from fastapi import FastAPI
-
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders.csv_loader import CSVLoader
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
+from slack_bolt.adapter.socket_mode.aiohttp import AsyncSocketModeHandler
+from slack_bolt.async_app import AsyncApp
+
+logging.basicConfig(level=logging.DEBUG)
+
+
 
 load_dotenv()
 
@@ -32,9 +31,29 @@ chain = ConversationalRetrievalChain.from_llm(
   retriever=vector_store.as_retriever()
 )
 
+bot_ids = os.environ["SLACK_BOT_IDS"].split(",")
+whitelist_channels = os.environ["SLACK_WHITELIST_CHANNELS"].split(",")
+
 @slack_app.event("app_mention")
-async def handle_events(body, event, say):
-    question = body['event']['blocks'][0]['elements'][0]['elements'][1]['text'].strip()
+async def handle_events(event, client, say):
+    contents = event['blocks'][0]['elements'][0]['elements']
+
+    bot_id = next((item["user_id"] for item in contents if item.get("user_id") in bot_ids), None)
+    user_id = event['user']
+
+    text = event['text']
+    question:str = text.split(f'<@{bot_id}>')[-1].strip()
+
+    if not question:
+        await say(f"おいおい、内容がないぞ <@{user_id}> さん。", thread_ts=event['ts'])
+        return
+
+    if event['channel'] not in whitelist_channels:
+        await say(f"すみません、<@{bot_id}> は特定のチャンネルでのみ動作します。", thread_ts=event['ts'])
+        return
+
+    await say(f":sun-spin:", thread_ts=event['ts'])
+
     chat_history = []
 
     print("start")
@@ -44,9 +63,10 @@ async def handle_events(body, event, say):
     })
     answer = result["answer"]
     print("end")
+
     chat_history.append((question, answer))
 
-    await say(f"Q: {question}\n\nA: {answer}")
+    await say(f"Q: {question}\n\nA: {answer}", thread_ts=event['ts'])
 
 @fastapi_app.get("/health")
 async def health():
