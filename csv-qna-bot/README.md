@@ -2,10 +2,9 @@
 
 ## Installation
 
-````bash
 ```bash
 $ poetry install
-````
+```
 
 ## Run
 
