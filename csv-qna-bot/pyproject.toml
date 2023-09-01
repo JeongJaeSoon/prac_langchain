@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-langchain = "^0.0.274"
+langchain = "^0.0.278"
 pandas = "^2.0.3"
 fastapi = "^0.103.0"
 uvicorn = "^0.23.2"
