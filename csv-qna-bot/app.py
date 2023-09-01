@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import traceback
@@ -12,6 +13,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from slack_bolt.adapter.socket_mode.aiohttp import AsyncSocketModeHandler
 from slack_bolt.async_app import AsyncApp
+from slack_sdk.web.async_client import AsyncWebClient
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -119,16 +121,37 @@ async def startup():
     await socket_handler.connect_async()
 
 # class SlackUpdateAsyncHandler(AsyncCallbackHandler):
-#     def __init__(self, client, channel, ts, initial_context="") -> None:
+#     def __init__(self, client: AsyncWebClient, channel, ts, initial_context="") -> None:
 #         self.client = client
 #         self.channel = channel
 #         self.ts = ts
 #         self.context = initial_context
+#         self.tokens = []
+#         self.update_frequency = 10
+#         self.update_interval = 5
 
-#     async def on_llm_new_token(self, token: str, **kwargs) -> None:
-#         self.context += token
-#         await self.client.chat_update(
+#     def on_llm_new_token(self, token: str, **kwargs) -> None:
+#         self.tokens.append(token)
+
+#         if len(self.tokens) >= self.update_frequency:
+#             self.update_chat()
+
+#         if not hasattr(self, 'update_task'):
+#             self.update_task = asyncio.create_task(self.delayed_update())
+
+#     async def delayed_update(self):
+#         await asyncio.sleep(self.update_interval)
+#         self.update_chat()
+
+#     def update_chat(self):
+#         self.context += ''.join(self.tokens)
+#         self.tokens = []
+
+#         asyncio.create_task(self.client.chat_update(
 #             channel=self.channel,
 #             ts=self.ts,
 #             text=f"{self.context}"
-#         )
+#         ))
+
+#         if hasattr(self, 'update_task'):
+#             delattr(self, 'update_task')
